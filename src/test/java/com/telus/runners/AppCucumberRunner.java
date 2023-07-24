@@ -14,7 +14,7 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 
 @CucumberOptions(features = "src/test/resources/features", glue = {
-        "com.telus.bped.stepsdefinition"}, tags = "@Lynx", plugin = {"pretty",
+        "com.telus.bped.stepsdefinition"}, tags = "@Manual", plugin = {"pretty",
         "com.test.cucumber.ExtentCucumberAdapter:",
         "com.telus.cucumber.plugin.ReportPortalCucumberPlugin",
         "rerun:target/rerun.txt"}, monochrome = true, publish = true
@@ -34,6 +34,8 @@ public class AppCucumberRunner extends AbstractTestNGCucumberTests {
             LoginPageSteps.userAccessVar = googleSheetsUtils.getJSONObjectFromGit(useraccess);
             String gSheetConfigData = googleSheetsUtils.getKeyValue("GSHEET_CONFIG", true);
             GoogleSheetsUtils.setgSheetConfigVar(googleSheetsUtils.getJSONObjectFromGit(gSheetConfigData));
+            String gSheetManualConfigData = googleSheetsUtils.getKeyValue("MANUAL_GSHEET_CONFIG", true);
+            GoogleSheetsUtils.setgSheetManualConfigVar(googleSheetsUtils.getJSONObjectFromGit(gSheetManualConfigData));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
