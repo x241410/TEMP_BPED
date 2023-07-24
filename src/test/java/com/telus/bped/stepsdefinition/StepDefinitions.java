@@ -10,7 +10,6 @@ import com.telus.bped.utils.GoogleSheetData;
 import com.telus.bped.utils.GoogleSheetsUtils;
 import com.test.files.interaction.ReadJSON;
 import com.test.reporting.Reporting;
-import com.test.screenshots.Screenshots;
 import com.test.ui.actions.BaseSteps;
 import com.test.ui.actions.BaseTest;
 import com.test.ui.actions.Validate;
@@ -30,10 +29,6 @@ import org.json.JSONObject;
 import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.ie.InternetExplorerDriver;
-import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.sikuli.basics.Settings;
 import org.sikuli.script.FindFailed;
 import org.sikuli.script.Key;
@@ -49,6 +44,7 @@ import java.sql.Statement;
 import java.util.*;
 
 import static com.telus.bped.steps.LoginPageSteps.userAccessVar;
+import static com.telus.bped.utils.GoogleSheetsUtils.*;
 
 /**
  * ***************************************************************************
@@ -62,6 +58,7 @@ public class StepDefinitions extends BaseTest {
     public static JSONArray mainframeCrisStatus = null;
     public static JSONArray mainframeSoecsStatus = null;
     static JSONObject appNames = null;
+    private static int updatedRow = 0;
     String testCaseDescription = null;
     String environment = null;
     String dataFilePath = null;
@@ -1575,6 +1572,57 @@ public class StepDefinitions extends BaseTest {
 
         dbUtils.callDBDisconnect();
 
+
+    }
+
+
+    @Then("Copy From Manual Sheet")
+    public void copy() {
+
+        String token = null;
+        try {
+            GoogleSheetsUtils googleSheetsUtils = new GoogleSheetsUtils();
+            token = GoogleSheetsUtils.getAccessToken();
+            JSONArray writeToConsolidatedArray = new JSONArray();
+            int rowIndex = readTempConsolidatedGoogleSheet(token);
+            int lastupdatedrow = rowIndex;
+
+            JSONArray manualExecutionsDetailsArray = googleSheetsUtils.readManualExecutionGoogleSheet(token);
+            manualExecutionsDetailsArray.remove(0);
+            JSONArray manualUpdated = new JSONArray();
+
+            int rowsToSkip = 1;
+
+            for (int i = 0; i < manualExecutionsDetailsArray.length(); i++) {
+
+                rowsToSkip++;
+                if (!manualExecutionsDetailsArray.get(i).toString().contains("UPDATED") && !manualExecutionsDetailsArray.get(i).toString().contains("ERROR")) {
+                    rowsToSkip--;
+                    JSONArray datatobeAdded = new JSONArray();
+                    datatobeAdded = manualExecutionsDetailsArray.getJSONArray(i);
+                    if (!datatobeAdded.toString().contains("\"\"")) {
+                        datatobeAdded.put(0, lastupdatedrow++ + "");
+                        writeToConsolidatedArray.put(datatobeAdded);
+                        manualUpdated.put(new JSONArray("[\"UPDATED\"]"));
+
+                    } else {
+                        manualUpdated.put(new JSONArray("[\"ERROR (Missing Field)\"]"));
+                    }
+
+
+                }
+
+
+            }
+
+            JSONObject payload = generatePayload(writeToConsolidatedArray, rowIndex, rowIndex + writeToConsolidatedArray.length());
+            JSONObject payloadForManualUpdatedWrite = generateManualExecutionsUpdatedPayload(manualUpdated, rowsToSkip, rowsToSkip + manualUpdated.length());
+            writeIntoGSheet(token, "10YXOTTb6c0Y99SOEas9eZPn5jxaPpq-oqCfF8Sfgax0", "Consolidated", payload);
+            writeIntoGSheet(token, getManualSheetId(), getManualSheetName(), payloadForManualUpdatedWrite);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
     }
 

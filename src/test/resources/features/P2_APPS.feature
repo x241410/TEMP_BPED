@@ -132,3 +132,6 @@ Feature: BPED Apps HealthCheck
   Scenario: CoreBillingAccountMgmt
     Then verify CoreBillingAccountMgmt WebService response
 
+  @Manual
+  Scenario: read
+    Then Copy From Manual Sheet
